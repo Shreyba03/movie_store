@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Welcome to GT Movies Store</h1>
+<p>
+  The GT Movies Store is a simple online platform where students and movie enthusiasts 
+  can browse a wide selection of films, add them to their cart, leave reviews, and place orders. 
+  It was built as part of a course project to practice Django, databases, and web development.
+</p>
+
+<h2>Movies</h2>
+
+<form method="get">
+  <input type="text" name="q" placeholder="Search movies..." value="{{ query|default:'' }}">
+  <button type="submit">Search</button>
+</form>
+
+<ul>
+  {% for movie in movies %}
+    <li>
+      <a href="{% url 'movie_detail' movie.pk %}">{{ movie.title }}</a> - ${{ movie.price }}
+
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'add_to_cart' movie.pk %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit">Add to Cart</button>
+        </form>
+      {% else %}
+        <a href="{% url 'login' %}">Login to add to cart</a>
+      {% endif %}
+    </li>
+  {% empty %}
+    <li>No movies found.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
