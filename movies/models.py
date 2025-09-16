@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from decimal import Decimal
 
 class Movie(models.Model):
     title = models.CharField(max_length=200)
@@ -37,6 +38,8 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
+    def total_price(self):
+        return sum(item.movie.price * item.quantity for item in self.orderitem_set.all())
 
 
 class OrderItem(models.Model):

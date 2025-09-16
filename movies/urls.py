@@ -26,4 +26,5 @@ urlpatterns = [
     # Review URLs
     path("review/<int:review_id>/edit/", views.review_edit, name="review_edit"),
     path("review/<int:review_id>/delete/", views.review_delete, name="review_delete"),
+    path("subscription/", views.subscription_view, name="subscription"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,10 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Movie, Review, Order, CartItem
+from .models import Movie, Review, Order, CartItem, OrderItem
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from .forms import SignUpForm
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 
 def movie_list(request):
     """Show all movies with optional search."""
@@ -73,11 +74,15 @@ def place_order(request):
     cart_items = CartItem.objects.filter(user=request.user)
     if cart_items.exists():
         order = Order.objects.create(user=request.user)
-        # Extract Movie objects from CartItems
-        movies = [item.movie for item in cart_items]
-        order.movies.add(*movies)  # use add() with unpacking
+        for item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                movie=item.movie,
+                quantity=item.quantity
+            )
         cart_items.delete()  # clear cart
     return redirect("view_orders")
+
 
 @login_required
 def view_orders(request):
@@ -118,3 +123,22 @@ def review_delete(request, review_id):
     movie_pk = review.movie.pk
     review.delete()
     return redirect("movie_detail", pk=movie_pk)
+
+@login_required
+def subscription_view(request):
+    total_spent = OrderItem.objects.filter(order__user=request.user).aggregate(
+        total=Sum(F('movie__price') * F('quantity'),
+                  output_field=DecimalField(max_digits=10, decimal_places=2))
+    )['total'] or 0
+
+    if total_spent < 15:
+        level = "Basic"
+    elif total_spent < 30:
+        level = "Medium"
+    else:
+        level = "Premium"
+
+    return render(request, "movies/subscription.html", {
+        "total_spent": total_spent,
+        "level": level
+    })
